@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Food Lava Fall: Spelling Game</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Fredoka', 'Segoe UI', sans-serif;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: #0f172a;
+            color: #fff;
+            overflow: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        #game-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+            overflow: hidden;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        #ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+            padding: 25px;
+        }
+
+        .hud-panel {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            position: relative;
+        }
+
+        #word-display {
+            font-size: 60px;
+            font-weight: 700;
+            letter-spacing: 12px;
+            background: #fff8dc;
+            color: #1e3a8a;
+            padding: 18px 50px;
+            border-radius: 60px;
+            border: 5px solid #f59e0b;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.5);
+            text-align: center;
+        }
+
+        .current-letter {
+            color: #ef4444;
+            text-decoration: underline;
+            font-weight: 700;
+        }
+
+        .filled-letter {
+            color: #10b981;
+        }
+
+        #score-display {
+            position: absolute;
+            right: 30px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 28px;
+            font-weight: 700;
+            background: #fff8dc;
+            color: #1e3a8a;
+            padding: 12px 28px;
+            border-radius: 50px;
+            border: 4px solid #f59e0b;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        }
+
+        #screen-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: transparent;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            padding: 40px;
+        }
+
+        .overlay-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+        }
+
+        h1 {
+            font-size: 72px;
+            font-weight: 700;
+            color: #fef08a;
+            margin: 0 0 20px 0;
+            text-shadow: 0 4px 20px rgba(234, 179, 8, 0.8);
+            text-align: center;
+        }
+
+        p {
+            font-size: 28px;
+            max-width: 700px;
+            text-align: center;
+            line-height: 1.5;
+            color: #fef08a;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.8);
+            margin: 0 0 30px 0;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 25px;
+            margin-top: 15px;
+        }
+
+        button {
+            background: linear-gradient(180deg, #facc15 0%, #eab308 100%);
+            color: #1e3a8a;
+            border: 4px solid #fef08a;
+            padding: 18px 45px;
+            font-size: 28px;
+            font-weight: 700;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 10px 25px rgba(234, 179, 8, 0.4);
+            transition: all 0.15s ease;
+            pointer-events: auto;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        button:hover {
+            transform: translateY(-4px) scale(1.03);
+            box-shadow: 0 15px 30px rgba(234, 179, 8, 0.6);
+        }
+
+        button:active {
+            transform: translateY(2px) scale(0.98);
+        }
+
+        .secondary-btn {
+            background: linear-gradient(180deg, #38bdf8 0%, #0284c7 100%);
+            color: #fff;
+            border-color: #bae6fd;
+            box-shadow: 0 10px 25px rgba(2, 132, 199, 0.4);
+        }
+        
+        .secondary-btn:hover {
+            box-shadow: 0 15px 30px rgba(2, 132, 199, 0.6);
+        }
+
+        #top-controls {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 12px;
+            z-index: 20;
+        }
+
+        .control-btn {
+            background: rgba(15, 23, 42, 0.8);
+            border: 2px solid #475569;
+            color: #e2e8f0;
+            padding: 10px 22px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 30px;
+            cursor: pointer;
+            pointer-events: auto;
+            backdrop-filter: blur(4px);
+        }
+        
+        .control-btn:hover {
+            background: rgba(30, 41, 59, 0.95);
+            border-color: #94a3b8;
+        }
+
+        #edit-words-panel {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 600px;
+        }
+
+        textarea {
+            width: 100%;
+            height: 160px;
+            background: #fff8dc;
+            color: #1e3a8a;
+            border: 4px solid #f59e0b;
+            border-radius: 20px;
+            padding: 20px;
+            font-size: 20px;
+            resize: none;
+            outline: none;
+            margin-bottom: 25px;
+        }
+        
+        textarea:focus {
+            border-color: #38bdf8;
+        }
+
+        .volume-container {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 25px;
+            background: rgba(255, 248, 220, 0.9);
+            padding: 12px 30px;
+            border-radius: 50px;
+            border: 3px solid #f59e0b;
+            backdrop-filter: blur(4px);
+        }
+
+        .volume-container label {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1e3a8a;
+        }
+
+        .volume-container input[type="range"] {
+            cursor: pointer;
+            accent-color: #eab308;
+            width: 150px;
+            height: 8px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <div id="top-controls">
+            <button id="home-btn" class="control-btn" style="display: none;" onclick="returnToHome()">🏠 home</button>
+            <button class="control-btn" onclick="toggleFullscreen()">fullscreen</button>
+        </div>
+
+        <canvas id="gameCanvas"></canvas>
+        
+        <div id="ui-layer" style="display: none;">
+            <div class="hud-panel">
+                <div id="word-display">----</div>
+                <div id="score-display">words: 0/7</div>
+            </div>
+        </div>
+
+        <div id="screen-overlay">
+            <!-- MAIN SCREEN -->
+            <div id="main-screen" class="overlay-content" style="justify-content: flex-end; padding-bottom: 80px;">
+                <div class="volume-container">
+                    <label for="volControl">🎵 volume:</label>
+                    <input type="range" id="volControl" min="0" max="1" step="0.05" value="0.5" oninput="adjustVolume(this.value)">
+                </div>
+
+                <div class="button-group">
+                    <button onclick="showModeSelection()">Start Game</button>
+                    <button class="secondary-btn" onclick="openEditWords()">Edit Words</button>
+                </div>
+            </div>
+
+            <!-- MODE SELECTION SCREEN -->
+            <div id="mode-screen" class="overlay-content" style="display: none;">
+                <p>Select spelling Mode:</p>
+                <div class="button-group">
+                    <button onclick="selectMode('guided')">Guided Spelling</button>
+                    <button class="secondary-btn" onclick="selectMode('unguided')">Unguided Spelling</button>
+                </div>
+            </div>
+
+            <!-- EDIT WORDS SCREEN -->
+            <div id="edit-words-panel">
+                <p>enter word list separated by commas:</p>
+                <textarea id="wordInputBox"></textarea>
+                <div class="button-group">
+                    <button onclick="saveWordsAndReturn()">save & back</button>
+                </div>
+            </div>
+
+            <!-- PRE-SPELL SCREEN (3 SECONDS) -->
+            <div id="memorize-screen" class="overlay-content" style="display: none;">
+                <p style="font-size: 32px; color: #fef08a; margin-bottom: 15px; text-shadow: 0 2px 10px rgba(0,0,0,0.8);">get ready to spell:</p>
+                <h1 id="memorize-word" style="font-size: 80px; letter-spacing: 10px; color: #fff; text-shadow: 0 4px 20px rgba(234, 179, 8, 0.9);"></h1>
+                <p id="memorize-timer" style="font-size: 32px; color: #fef08a; font-weight: 600; text-shadow: 0 2px 10px rgba(0,0,0,0.8);">starting in 3...</p>
+            </div>
+
+            <!-- END GAME SCREEN -->
+            <div id="end-screen" class="overlay-content" style="display: none;">
+                <h1 id="end-title"></h1>
+                <p id="end-desc"></p>
+                <div class="button-group">
+                    <button onclick="restartCurrentWord()">🔄 try again</button>
+                    <button class="secondary-btn" onclick="nextWordFromEnd()">➡️ next word</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Audio Elements -->
+    <audio id="bgMusic" src="bg_music.mp3" loop preload="auto"></audio>
+    <audio id="correctSound" src="correct.mp3" preload="auto"></audio>
+    <audio id="wrongSound" src="wrong.mp3" preload="auto"></audio>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const uiLayer = document.getElementById('ui-layer');
+        const wordDisplay = document.getElementById('word-display');
+        const scoreDisplay = document.getElementById('score-display');
+        const screenOverlay = document.getElementById('screen-overlay');
+        const homeBtn = document.getElementById('home-btn');
+        
+        const mainScreen = document.getElementById('main-screen');
+        const modeScreen = document.getElementById('mode-screen');
+        const editWordsPanel = document.getElementById('edit-words-panel');
+        const memorizeScreen = document.getElementById('memorize-screen');
+        const endScreen = document.getElementById('end-screen');
+        const wordInputBox = document.getElementById('wordInputBox');
+        const memorizeWordEl = document.getElementById('memorize-word');
+        const memorizeTimerEl = document.getElementById('memorize-timer');
+        const endTitle = document.getElementById('end-title');
+        const endDesc = document.getElementById('end-desc');
+        const bgMusic = document.getElementById('bgMusic');
+        const correctSound = document.getElementById('correctSound');
+        const wrongSound = document.getElementById('wrongSound');
+
+        const bgImg = new Image();
+        let bgLoaded = false;
+        bgImg.onload = () => { bgLoaded = true; };
+        bgImg.src = 'bg.png';
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            basket.y = canvas.height - 90;
+        }
+        window.addEventListener('resize', resizeCanvas);
+
+        const defaultWords = ["hamburgers", "sandwiches", "hot dogs", "bananas", "oranges", "apples", "watermelons"];
+        let wordList = [];
+        let remainingWords = [];
+        
+        function loadWordDeck() {
+            const cached = localStorage.getItem('lava_spelling_deck');
+            if (cached) {
+                try {
+                    wordList = JSON.parse(cached);
+                } catch (e) {
+                    wordList = [...defaultWords];
+                }
+            } else {
+                wordList = [...defaultWords];
+            }
+            wordInputBox.value = wordList.join(", ");
+        }
+        loadWordDeck();
+
+        let currentWord = "";
+        let targetLetterIndex = 0;
+        let score = 0;
+        let wrongCatchCount = 0;
+        let gameState = "START"; 
+        let gameMode = "guided";
+        
+        let letters = [];
+        let particles = [];
+        let spawnBatchInterval = null;
+        let memorizeTimerId = null;
+
+        let spongebobImg = new Image();
+        spongebobImg.src = "spongebob.gif";
+        let scaredImg = new Image();
+        scaredImg.src = "scared.gif";
+        let happyImg = new Image();
+        happyImg.src = "happy.gif";
+        let bustedImg = new Image();
+        bustedImg.src = "busted.gif";
+
+        let basket = {
+            x: 750,
+            y: 520,
+            width: 190,
+            height: 70
+        };
+
+        const baseLavaHeight = 40; 
+        const deathLavaHeight = 480; 
+        let currentLavaLevel = baseLavaHeight; 
+
+        resizeCanvas();
+
+        let globalVolume = 0.5;
+        function adjustVolume(val) {
+            globalVolume = parseFloat(val);
+            bgMusic.volume = globalVolume;
+            correctSound.volume = globalVolume;
+            wrongSound.volume = globalVolume;
+        }
+        bgMusic.volume = 0.5;
+        correctSound.volume = 0.5;
+        wrongSound.volume = 0.5;
+
+        function playSound(sound) {
+            sound.currentTime = 0;
+            sound.play().catch(e => {});
+        }
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {});
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        }
+
+        function openEditWords() {
+            screenOverlay.style.background = "rgba(15, 23, 42, 0.85)";
+            screenOverlay.style.backdropFilter = "blur(6px)";
+            mainScreen.style.display = "none";
+            editWordsPanel.style.display = "flex";
+        }
+
+        function saveWordsAndReturn() {
+            const rawText = wordInputBox.value;
+            const parsed = rawText.split(',').map(w => w.trim().toLowerCase()).filter(w => w.length > 0);
+            if (parsed.length > 0) {
+                wordList = parsed;
+                localStorage.setItem('lava_spelling_deck', JSON.stringify(wordList));
+            }
+            editWordsPanel.style.display = "none";
+            screenOverlay.style.background = "transparent";
+            screenOverlay.style.backdropFilter = "none";
+            mainScreen.style.display = "flex";
+        }
+
+        function showModeSelection() {
+            mainScreen.style.display = "none";
+            modeScreen.style.display = "flex";
+            screenOverlay.style.background = "rgba(15, 23, 42, 0.75)";
+            screenOverlay.style.backdropFilter = "blur(4px)";
+        }
+
+        function selectMode(mode) {
+            gameMode = mode;
+            modeScreen.style.display = "none";
+            screenOverlay.style.background = "transparent";
+            screenOverlay.style.backdropFilter = "none";
+            bgMusic.play().catch(e => {});
+            remainingWords = [...wordList];
+            score = 0;
+            startNewWordCycle();
+        }
+
+        function returnToHome() {
+            gameState = "START";
+            if (spawnBatchInterval) clearInterval(spawnBatchInterval);
+            if (memorizeTimerId) clearInterval(memorizeTimerId);
+            letters = [];
+            particles = [];
+            
+            uiLayer.style.display = "none";
+            memorizeScreen.style.display = "none";
+            endScreen.style.display = "none";
+            editWordsPanel.style.display = "none";
+            modeScreen.style.display = "none";
+            homeBtn.style.display = "none";
+            
+            mainScreen.style.display = "flex";
+            screenOverlay.style.display = "flex";
+            screenOverlay.style.background = "transparent";
+            screenOverlay.style.backdropFilter = "none";
+        }
+
+        function getCanvasPos(e) {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.touches && e.touches.length > 0 ? e.touches[0].clientX : e.clientX;
+            return (clientX - rect.left) * (canvas.width / rect.width);
+        }
+
+        function handleMove(e) {
+            if (gameState !== "PLAYING") return;
+            if (e.touches) {
+                e.preventDefault();
+            }
+            basket.x = getCanvasPos(e);
+            const minX = 520;
+            const maxX = canvas.width - basket.width / 2 - 40;
+            if (basket.x < minX) basket.x = minX;
+            if (basket.x > maxX) basket.x = maxX;
+        }
+
+        window.addEventListener('mousemove', handleMove);
+        window.addEventListener('touchmove', handleMove, { passive: false });
+        window.addEventListener('touchstart', handleMove, { passive: false });
+
+        function startNewWordCycle() {
+            if (remainingWords.length === 0) {
+                remainingWords = [...wordList];
+            }
+            const randIdx = Math.floor(Math.random() * remainingWords.length);
+            currentWord = remainingWords.splice(randIdx, 1)[0];
+            targetLetterIndex = 0;
+            wrongCatchCount = 0;
+            currentLavaLevel = baseLavaHeight;
+
+            showMemorizeScreen();
+        }
+
+        function showMemorizeScreen() {
+            gameState = "MEMORIZING";
+            homeBtn.style.display = "block";
+            screenOverlay.style.background = "rgba(15, 23, 42, 0.75)";
+            screenOverlay.style.backdropFilter = "blur(4px)";
+            screenOverlay.style.display = "flex";
+            memorizeScreen.style.display = "flex";
+            endScreen.style.display = "none";
+            uiLayer.style.display = "none";
+
+            memorizeWordEl.innerText = currentWord;
+            
+            let countdown = 3;
+            memorizeTimerEl.innerText = `starting in ${countdown}...`;
+
+            if (memorizeTimerId) clearInterval(memorizeTimerId);
+            memorizeTimerId = setInterval(() => {
+                countdown--;
+                if (countdown > 0) {
+                    memorizeTimerEl.innerText = `starting in ${countdown}...`;
+                } else {
+                    clearInterval(memorizeTimerId);
+                    beginPlayingState();
+                }
+            }, 1000);
+        }
+
+        function spawnLetterSet() {
+            if (gameState !== "PLAYING") return;
+
+            let batchChars = [];
+            const alphabet = "abcdefghijklmnopqrstuvwxyz";
+
+            if (targetLetterIndex < currentWord.length) {
+                batchChars.push(currentWord[targetLetterIndex]);
+            }
+
+            while (batchChars.length < 3) {
+                let randChar = alphabet[Math.floor(Math.random() * alphabet.length)];
+                if (!batchChars.includes(randChar)) {
+                    batchChars.push(randChar);
+                }
+            }
+
+            batchChars.sort(() => Math.random() - 0.5);
+
+            const minLaneX = 520;
+            const maxLaneX = canvas.width - 60;
+            const laneWidth = (maxLaneX - minLaneX) / 3;
+
+            batchChars.forEach((char, index) => {
+                let startX = minLaneX + (index * laneWidth) + (laneWidth / 2) + (Math.random() * 20 - 10);
+                letters.push({
+                    x: startX,
+                    y: -80,
+                    char: char,
+                    speed: Math.random() * 0.6 + 2.2 + (score * 0.1)
+                });
+            });
+        }
+
+        function beginPlayingState() {
+            gameState = "PLAYING";
+            screenOverlay.style.background = "transparent";
+            screenOverlay.style.backdropFilter = "none";
+            screenOverlay.style.display = "none";
+            memorizeScreen.style.display = "none";
+            uiLayer.style.display = "flex";
+            letters = [];
+            particles = [];
+
+            updateWordUI();
+            if (spawnBatchInterval) clearInterval(spawnBatchInterval);
+
+            spawnLetterSet();
+            spawnBatchInterval = setInterval(() => {
+                if (gameState === "PLAYING" && letters.length === 0) {
+                    spawnLetterSet();
+                }
+            }, 300);
+
+            requestAnimationFrame(animate);
+        }
+
+        function updateWordUI() {
+            while (targetLetterIndex < currentWord.length && currentWord[targetLetterIndex] === ' ') {
+                targetLetterIndex++;
+            }
+
+            if (targetLetterIndex >= currentWord.length) {
+                score++;
+                endGame(true);
+                return;
+            }
+
+            let htmlStr = "";
+            for (let i = 0; i < currentWord.length; i++) {
+                if (currentWord[i] === ' ') {
+                    htmlStr += "&nbsp;&nbsp;";
+                } else if (i < targetLetterIndex) {
+                    htmlStr += `<span class="filled-letter">${currentWord[i]}</span>`;
+                } else {
+                    if (gameMode === "guided") {
+                        if (i === targetLetterIndex) {
+                            htmlStr += `<span class="current-letter">${currentWord[i]}</span>`;
+                        } else {
+                            htmlStr += `<span>${currentWord[i]}</span>`;
+                        }
+                    } else {
+                        // Unguided Mode: Shows accurate total count via underscores (_ _ _ _ _ _)
+                        if (i === targetLetterIndex) {
+                            htmlStr += `<span class="current-letter">_</span>`;
+                        } else {
+                            htmlStr += `<span>_</span>`;
+                        }
+                    }
+                }
+            }
+            wordDisplay.innerHTML = htmlStr;
+        }
+
+        function createExplosion(x, y, color, count) {
+            for (let i = 0; i < count; i++) {
+                particles.push({
+                    x: x,
+                    y: y,
+                    vx: (Math.random() - 0.5) * 9,
+                    vy: (Math.random() - 0.5) * 9 - 2,
+                    radius: Math.random() * 5 + 2,
+                    color: color,
+                    alpha: 1,
+                    decay: Math.random() * 0.02 + 0.015
+                });
+            }
+        }
+
+        function endGame(isWin) {
+            gameState = "END";
+            homeBtn.style.display = "none";
+            screenOverlay.style.background = "rgba(15, 23, 42, 0.85)";
+            screenOverlay.style.backdropFilter = "blur(6px)";
+            screenOverlay.style.display = "flex";
+            endScreen.style.display = "flex";
+            uiLayer.style.display = "none";
+            if (spawnBatchInterval) clearInterval(spawnBatchInterval);
+
+            if (isWin) {
+                endTitle.innerText = "🏆 you saved spongebob!";
+                endTitle.style.color = "#4ade80";
+                endTitle.style.textShadow = "0 4px 20px rgba(74, 222, 128, 0.4)";
+                endDesc.innerHTML = `word successfully spelled: <b style="color: #fbbf24;">${currentWord}</b>`;
+            } else {
+                endTitle.innerText = "🌋 busted by lava!";
+                endTitle.style.color = "#f87171";
+                endTitle.style.textShadow = "0 4px 20px rgba(248, 113, 113, 0.4)";
+                endDesc.innerHTML = `the lava overflowed while spelling: <b style="color: #fbbf24;">${currentWord}</b>`;
+            }
+            scoreDisplay.innerText = `words: ${score}/${wordList.length}`;
+        }
+
+        function restartCurrentWord() {
+            remainingWords.push(currentWord);
+            screenOverlay.style.background = "transparent";
+            screenOverlay.style.backdropFilter = "none";
+            endScreen.style.display = "none";
+            startNewWordCycle();
+        }
+
+        function nextWordFromEnd() {
+            screenOverlay.style.background = "transparent";
+            screenOverlay.style.backdropFilter = "none";
+            endScreen.style.display = "none";
+            startNewWordCycle();
+        }
+
+        function animate(timestamp) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            if (gameState === "START" || gameState === "MEMORIZING") {
+                if (bgLoaded && bgImg.complete && bgImg.naturalWidth !== 0) {
+                    ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
+                } else {
+                    let grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+                    grad.addColorStop(0, "#38bdf8");
+                    grad.addColorStop(1, "#0284c7");
+                    ctx.fillStyle = grad;
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                }
+                requestAnimationFrame(animate);
+                return;
+            }
+
+            if (gameState !== "PLAYING") return;
+
+            if (currentLavaLevel >= deathLavaHeight) {
+                endGame(false);
+                return;
+            }
+
+            // LAYER 1: Colossal Spongebob Character
+            ctx.save();
+            let activeSponge = spongebobImg;
+            if (gameState === "END") {
+                activeSponge = (score > 0 && targetLetterIndex >= currentWord.length) ? happyImg : bustedImg;
+            } else if (wrongCatchCount >= 3) {
+                activeSponge = scaredImg;
+            }
+
+            const spongeX = -100;
+            const spongeY = canvas.height - 950;
+            if (activeSponge.complete && activeSponge.naturalWidth !== 0) {
+                ctx.drawImage(activeSponge, spongeX, spongeY, 900, 900);
+            } else {
+                ctx.fillStyle = "#fbbf24";
+                ctx.beginPath();
+                ctx.arc(spongeX + 450, spongeY + 450, 400, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.restore();
+
+            // LAYER 2: Rising Fluid Lava
+            let lavaGrad = ctx.createLinearGradient(0, canvas.height - currentLavaLevel, 0, canvas.height);
+            lavaGrad.addColorStop(0, "#ef4444");
+            lavaGrad.addColorStop(0.4, "#f97316");
+            lavaGrad.addColorStop(1, "#7f1d1d");
+            ctx.fillStyle = lavaGrad;
+            ctx.beginPath();
+            ctx.moveTo(0, canvas.height);
+            let timeFactor = timestamp * 0.0035;
+            for (let x = 0; x <= canvas.width; x += 25) {
+                let waveY = canvas.height - currentLavaLevel + Math.sin(x * 0.012 + timeFactor) * 8;
+                ctx.lineTo(x, waveY);
+            }
+            ctx.lineTo(canvas.width, canvas.height);
+            ctx.fill();
+
+            // Safety Line Indicator
+            ctx.strokeStyle = "rgba(248, 113, 113, 0.6)";
+            ctx.lineWidth = 4;
+            ctx.setLineDash([14, 12]);
+            ctx.beginPath();
+            ctx.moveTo(0, canvas.height - deathLavaHeight);
+            ctx.lineTo(canvas.width, canvas.height - deathLavaHeight);
+            ctx.stroke();
+            ctx.setLineDash([]); 
+
+            ctx.fillStyle = "rgba(248, 113, 113, 0.9)";
+            ctx.font = "700 15px Fredoka";
+            ctx.fillText("critical overflow line", 40, canvas.height - deathLavaHeight - 12);
+
+            // Particles
+            for (let i = particles.length - 1; i >= 0; i--) {
+                let p = particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.alpha -= p.decay;
+                ctx.save();
+                ctx.globalAlpha = p.alpha;
+                ctx.fillStyle = p.color;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+                if (p.alpha <= 0) particles.splice(i, 1);
+            }
+
+            // LAYER 3: 3x Bigger Falling Letters
+            for (let i = letters.length - 1; i >= 0; i--) {
+                let l = letters[i];
+                l.y += l.speed;
+
+                ctx.fillStyle = "#1e293b";
+                ctx.strokeStyle = "#94a3b8";
+                ctx.lineWidth = 5;
+
+                ctx.beginPath();
+                ctx.roundRect(l.x - 51, l.y - 51, 102, 102, 22);
+                ctx.fill();
+                ctx.stroke();
+
+                ctx.fillStyle = "#ffffff";
+                ctx.font = "700 56px Fredoka";
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                ctx.fillText(l.char, l.x, l.y + 3);
+
+                const basketTop = basket.y - basket.height / 2;
+                const basketBottom = basket.y + basket.height / 2;
+                const basketLeft = basket.x - basket.width / 2;
+                const basketRight = basket.x + basket.width / 2;
+
+                if (l.y + 51 >= basketTop && l.y - 51 <= basketBottom &&
+                    l.x + 51 >= basketLeft && l.x - 51 <= basketRight) {
+                    let targetChar = currentWord[targetLetterIndex];
+                    if (l.char === targetChar) {
+                        playSound(correctSound);
+                        createExplosion(l.x, l.y, "#4ade80", 22);
+                        targetLetterIndex++;
+                        updateWordUI();
+                    } else {
+                        playSound(wrongSound);
+                        createExplosion(l.x, l.y, "#f87171", 22);
+                        wrongCatchCount++;
+                        currentLavaLevel += 55;
+                    }
+                    letters = [];
+                    break;
+                }
+
+                if (l.y > canvas.height + 60) {
+                    letters.splice(i, 1);
+                }
+            }
+
+            // LAYER 4: Woven Basket
+            ctx.save();
+            ctx.shadowBlur = 20;
+            ctx.shadowColor = "#f97316";
+
+            let basketGrad = ctx.createLinearGradient(basket.x, basket.y - basket.height / 2, basket.x, basket.y + basket.height / 2);
+            basketGrad.addColorStop(0, "#d97706");
+            basketGrad.addColorStop(0.5, "#b45309");
+            basketGrad.addColorStop(1, "#78350f");
+            ctx.fillStyle = basketGrad;
+            ctx.beginPath();
+            ctx.roundRect(basket.x - basket.width / 2, basket.y - basket.height / 2, basket.width, basket.height, 16);
+            ctx.fill();
+
+            ctx.strokeStyle = "rgba(0, 0, 0, 0.35)";
+            ctx.lineWidth = 3;
+            let startX = basket.x - basket.width / 2 + 15;
+            let endX = basket.x + basket.width / 2 - 15;
+            for (let wx = startX; wx < endX; wx += 18) {
+                ctx.beginPath();
+                ctx.moveTo(wx, basket.y - basket.height / 2 + 6);
+                ctx.lineTo(wx, basket.y + basket.height / 2 - 6);
+                ctx.stroke();
+            }
+
+            ctx.beginPath();
+            ctx.moveTo(basket.x - basket.width / 2 + 8, basket.y);
+            ctx.lineTo(basket.x + basket.width / 2 - 8, basket.y);
+            ctx.stroke();
+
+            ctx.strokeStyle = "#fef08a";
+            ctx.lineWidth = 5;
+            ctx.beginPath();
+            ctx.roundRect(basket.x - basket.width / 2, basket.y - basket.height / 2, basket.width, basket.height, 16);
+            ctx.stroke();
+
+            ctx.restore();
+
+            requestAnimationFrame(animate);
+        }
+
+        requestAnimationFrame(animate);
+    </script>
+</body>
+</html>
